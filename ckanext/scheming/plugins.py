@@ -224,6 +224,7 @@ class SchemingDatasetsPlugin(p.SingletonPlugin, DefaultDatasetForm,
         Validate and convert for package_create, package_update and
         package_show actions.
         """
+        log.warning("TEST TEST TEST")
         thing, action_type = action.split('_')
         t = data_dict.get('type')
         if not t or t not in self._schemas:
@@ -231,9 +232,12 @@ class SchemingDatasetsPlugin(p.SingletonPlugin, DefaultDatasetForm,
                 "Unsupported dataset type: {t}".format(t=t)]}
 
         scheming_schema = self._expanded_schemas[t]
+        log.warning("scheming_schema: {}".format(scheming_schema))
 
         before = scheming_schema.get('before_validators')
+        log.warning("before: {}".format(before))
         after = scheming_schema.get('after_validators')
+        log.warning("after: {}".format(after))
         if action_type == 'show':
             get_validators = _field_output_validators
             before = after = None
@@ -265,8 +269,11 @@ class SchemingDatasetsPlugin(p.SingletonPlugin, DefaultDatasetForm,
                 if convert_this and 'repeating_subfields' in f:
                     composite_convert_fields.append(f['field_name'])
 
+        log.warning("composite_convert_fields: {}".format(composite_convert_fields))
+
         def composite_convert_to(key, data, errors, context):
             unflat = unflatten(data)
+            log.warning("UNFLAT: {}".format(unflat))
             for f in composite_convert_fields:
                 if f not in unflat:
                     continue
@@ -296,14 +303,18 @@ class SchemingDatasetsPlugin(p.SingletonPlugin, DefaultDatasetForm,
                 for f in scheming_schema['resource_fields']
                 if 'repeating_subfields' in f
             }
+            log.warning("RESOURCE COMPOSITE: {}".format(resource_composite))
             if resource_composite and 'resources' in data_dict:
                 for res in data_dict['resources']:
+                    log.warning("ABOUT TO EXPAND: {}".format(res))
                     expand_form_composite(res, resource_composite)
             # convert composite package fields to extras so they are stored
             if composite_convert_fields:
+                log.warning("CONVERT COMPOSITE PACKAGE FIELDS TO EXTRAS...")
                 schema = dict(
                     schema,
                     __after=schema.get('__after', []) + [composite_convert_to])
+                log.warning("SCHEMA: {}".format(schema))
 
         return navl_validate(data_dict, schema, context)
 
@@ -332,11 +343,13 @@ def expand_form_composite(data, fieldnames):
     "field-0-subfield..." convert these to lists of dicts
     """
     # if "field" exists, don't look for "field-0-subfield"
+    log.warning("FIELDNAMES: {}".format(fieldnames))
     fieldnames -= set(data)
     if not fieldnames:
         return
     indexes = {}
     for key in sorted(data):
+        log.warning("KEY LOOP KEY: {}".format(key))
         if '-' not in key:
             continue
         parts = key.split('-')
@@ -346,6 +359,7 @@ def expand_form_composite(data, fieldnames):
             indexes[parts[1]] = len(indexes)
         comp = data.setdefault(parts[0], [])
         parts[1] = indexes[parts[1]]
+        log.warning("PARTS: {}".format(parts))
         try:
             try:
                 comp[int(parts[1])]['-'.join(parts[2:])] = data[key]
