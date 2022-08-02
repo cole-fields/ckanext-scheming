@@ -232,7 +232,6 @@ class SchemingDatasetsPlugin(p.SingletonPlugin, DefaultDatasetForm,
                 "Unsupported dataset type: {t}".format(t=t)]}
 
         scheming_schema = self._expanded_schemas[t]
-        log.warning("scheming_schema: {}".format(scheming_schema))
 
         before = scheming_schema.get('before_validators')
         log.warning("before: {}".format(before))
@@ -273,7 +272,6 @@ class SchemingDatasetsPlugin(p.SingletonPlugin, DefaultDatasetForm,
 
         def composite_convert_to(key, data, errors, context):
             unflat = unflatten(data)
-            log.warning("UNFLAT: {}".format(unflat))
             for f in composite_convert_fields:
                 if f not in unflat:
                     continue
@@ -304,17 +302,26 @@ class SchemingDatasetsPlugin(p.SingletonPlugin, DefaultDatasetForm,
                 if 'repeating_subfields' in f
             }
             log.warning("RESOURCE COMPOSITE: {}".format(resource_composite))
+            # resource_composite & 
             if resource_composite and 'resources' in data_dict:
+                counter = 0
                 for res in data_dict['resources']:
-                    log.warning("ABOUT TO EXPAND: {}".format(res))
-                    expand_form_composite(res, resource_composite)
+                    log.warning("ABOUT TO EXPAND: {}".format(res.get('id')))
+                    log.warning("RESOURCE_COMPOSITE IN LOOP: {}".format(resource_composite))
+                    log.warning("RESOURCE POSITION: {}".format(counter))
+                    log.warning("**************************************")
+                    for k, v in res.items():
+                        log.info("Key: {}".format(k))
+                        log.info("Value: {}".format(v))
+                    log.warning("**************************************")
+                    expand_form_composite(res, resource_composite.copy())
+                    counter += 1
             # convert composite package fields to extras so they are stored
             if composite_convert_fields:
                 log.warning("CONVERT COMPOSITE PACKAGE FIELDS TO EXTRAS...")
                 schema = dict(
                     schema,
                     __after=schema.get('__after', []) + [composite_convert_to])
-                log.warning("SCHEMA: {}".format(schema))
 
         return navl_validate(data_dict, schema, context)
 
